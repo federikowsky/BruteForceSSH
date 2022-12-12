@@ -40,7 +40,6 @@ def goodbye():
         {reset}
         """
         print(s)
-    print("Goodbye!\n")
 
 class BruteForceSSH:
     uvloop.install()

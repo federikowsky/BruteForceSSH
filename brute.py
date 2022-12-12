@@ -96,7 +96,7 @@ if __name__ == '__main__':
         args.sem = calculateConcurrency()
     
     print(args)
-    BruteForceSSH(
+    b = BruteForceSSH(
         args.user,
         args.address,
         args.port,
@@ -108,5 +108,11 @@ if __name__ == '__main__':
         args.async_sleep,
         args.verbose,
         args.quiet
-    ).run()
+    )
+    try:
+        b.run()
+    except KeyboardInterrupt as k:
+        print(f"\nQuitting...")
+    except Exception as e:
+        print(f"{e}\nQuitting...")
     
