@@ -1,4 +1,5 @@
 import atexit
+import os
 import time
 import uvloop
 import asyncio, asyncssh, aiofiles, aiocsv
@@ -16,6 +17,8 @@ start: float = 0
 clone: dict[str, int] = {}
 
 def goodbye():
+    if not os.path.exists('debug'):
+        os.makedirs('debug')
     with open("debug/statistic.txt", "w") as f:
         pprint(clone, f)
     elapsed = time.perf_counter() - start
@@ -254,9 +257,9 @@ if __name__ == '__main__':
     start: float = time.perf_counter()
 
     b = BruteForceSSH(
-        user='kali',
+        user='kepap',
         host='192.168.0.197',
-        port=4242,
+        port=22,
         file='passwords.csv',
         mode=2,
         sem=95,
@@ -268,5 +271,6 @@ if __name__ == '__main__':
     
     print(time.perf_counter() - start)
 
-# MOST PERFORMANT ARGS
-# python3 brute.py -u fede -w ../wordlist/passwords_copy.csv -a 192.168.0.212 -p 4242 -m 1 --sem 100 -v
+
+
+

@@ -42,14 +42,14 @@ parser.add_argument('-w', '--wordlist', type=str, metavar='', required=True, hel
 parser.add_argument('-a', '--address',  default="127.0.0.1", type=str, metavar='', required=False, help='host address')
 parser.add_argument('-p', '--port',     default=22, type=int, metavar='', required=False, help='port to connect to host')
 parser.add_argument('-m', '--mode',     default=1, type=int, metavar='', required=False, help=mode)
-parser.add_argument('--sem',            default=75, type=int, metavar='', required=False, help=sem)
+parser.add_argument('--sem',            default=100, type=int, metavar='', required=False, help=sem)
 parser.add_argument('--max-workers',    default=0, type=int, metavar='', required=False, help=max_workers)
 parser.add_argument('--max-retries',    default=3, type=int, metavar='', required=False, help='set the maximum number of retries for request if fails')
 parser.add_argument('--async-sleep',    default=0, type=float, metavar='', required=False, help='sleep for a specified amount of seconds before retrying')
 
 group = parser.add_mutually_exclusive_group()
 group.add_argument('-q', '--quiet', action='store_true', help='print quiet')
-group.add_argument('-v', '--verbose', action='store_true', help='print verbose')
+group.add_argument('-v', '--verbose', action='store_true', default=True, help='print verbose')
 args = parser.parse_args()
 
 def calculateConcurrency():
