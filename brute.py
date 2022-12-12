@@ -27,6 +27,11 @@ if < 0  the tool will try to find out the optimal
 else    Default/Passed value is used
 """
 
+max_workers="""set the maximum number of workers of the ThreadpoolExecutor
+else standard will be used [number of phisical core * 2]
+Note: not fully optimized yet
+"""
+
 parser = argparse.ArgumentParser(
         prog="brute.py",
         description="- [ Options ] -",
@@ -38,7 +43,7 @@ parser.add_argument('-a', '--address',  default="127.0.0.1", type=str, metavar='
 parser.add_argument('-p', '--port',     default=22, type=int, metavar='', required=False, help='port to connect to host')
 parser.add_argument('-m', '--mode',     default=1, type=int, metavar='', required=False, help=mode)
 parser.add_argument('--sem',            default=75, type=int, metavar='', required=False, help=sem)
-parser.add_argument('--max-workers',    default=0, type=int, metavar='', required=False, help='set the maximum number of workers of the ThreadpoolExecutor\nelse standard will be used [number of phisical core * 2]')
+parser.add_argument('--max-workers',    default=0, type=int, metavar='', required=False, help=max_workers)
 parser.add_argument('--max-retries',    default=3, type=int, metavar='', required=False, help='set the maximum number of retries for request if fails')
 parser.add_argument('--async-sleep',    default=0, type=float, metavar='', required=False, help='sleep for a specified amount of seconds before retrying')
 

