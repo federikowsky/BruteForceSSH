@@ -76,7 +76,7 @@ def calculateConcurrency():
             return succ, err
         
         print(f"\33[1;36;1mtrying with {N} concurrently request...")
-        succ, err = asyncio.run(run_multiple_clients(args.host, args.port))
+        succ, err = asyncio.run(run_multiple_clients(args.address, args.port))
         print(f"\33[1;36;1mRequest Intercepted by Exception:\t{err}\nRequest succesfully sent:\t\t{succ}")
         if err > succ + 20:
             print(f"\33[1;31;1mthe gap is too big try to lower rps...\n")

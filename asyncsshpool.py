@@ -113,7 +113,7 @@ class BruteForceSSH:
             loop: asyncio.AbstractEventLoop = asyncio.new_event_loop()
             try:
                 # asyncio.set_event_loop(loop)
-                return asyncio.run(self.brute(password, nostop))
+                asyncio.run(self.brute(password, nostop))
             except Exception as e:
                 print(e.__class__)
             finally:
@@ -248,7 +248,7 @@ class BruteForceSSH:
                         for passw in copy_set
                     ]
                 await asyncio.gather(*tasks, return_exceptions=True)
-
+        return
 
 
 
@@ -274,3 +274,4 @@ if __name__ == '__main__':
 
 
 
+# nmap -p 22 --script ssh-brute --script-args userdb=/Users/federikowsky/Desktop/MyProjects/Python/BruteForce/wordlist/user.txt,unpwdb.timelimit=0,passdb=/Users/federikowsky/Desktop/MyProjects/Python/BruteForce/wordlist/150.txt,ssh-brute.timeout=0s,ssh-brute.start=1000,self-brute.threads=1000,self-brute.firstonly=True localhost
